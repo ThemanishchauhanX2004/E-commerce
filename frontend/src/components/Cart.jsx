@@ -33,7 +33,7 @@ export default function Cart() {
     const fetchCart = async () => {
       setLoading(true);
       try {
-        const res = await fetch("https://e-com-project-msn4.onrender.com/cart/get", {
+        const res = await fetch("https://e-commerce-1-km7j.onrender.com/cart/get", {
           method: "GET",
           credentials: "include", //cookie 
         });
@@ -51,7 +51,7 @@ export default function Cart() {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch("https://e-com-project-msn4.onrender.com/address/get", {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/address/get", {
         method: "GET",
         credentials: "include",
       });
@@ -75,7 +75,7 @@ export default function Cart() {
     setUpdating(true);
 
     try {
-      const res = await fetch("https://e-com-project-msn4.onrender.com/cart/update", {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/cart/update", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -105,7 +105,7 @@ export default function Cart() {
     setSendingOtp(true);
 
     try {
-      const res = await fetch("https://e-com-project-msn4.onrender.com/otp/send", {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/otp/send", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -139,7 +139,7 @@ export default function Cart() {
     setVerifyingOtp(true);
 
     try {
-      const res = await fetch("https://e-com-project-msn4.onrender.com/otp/verify", {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/otp/verify", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -183,7 +183,7 @@ export default function Cart() {
     }
 
     try {
-      const res = await fetch("https://e-com-project-msn4.onrender.com/address/add", {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/address/add", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -236,7 +236,7 @@ export default function Cart() {
 
 async function deleteAdd(id) {
   try {
-    const res = await fetch(`https://e-com-project-msn4.onrender.com/address/delete/${id}`, {
+    const res = await fetch(`https://e-commerce-1-km7j.onrender.com/address/delete/${id}`, {
       method: "DELETE",
         credentials: "include",
     });

@@ -32,7 +32,7 @@ export default function Checkout() {
         price: p.price,
       }));
 
-      const res = await fetch("https://e-com-project-msn4.onrender.com/order/addOrder", {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/order/addOrder", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

@@ -23,7 +23,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://e-com-project-1-db0p.onrender.com",
+    origin: "https://e-commerce-2-tsla.onrender.com",
     credentials: true, 
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],

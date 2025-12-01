@@ -68,56 +68,81 @@ function AdminPanel() {
     }
   };
 
-  const handleUpdate = async (id, updatedProduct) => {
-    try {
-      const newImages = updatedImages[id] || [];
-      let res;
+ const handleUpdate = async (id, updatedProduct) => {
+  try {
+    const newImages = updatedImages[id] || [];
+    let res;
 
-      if (newImages.length > 0) {
-        const formData = new FormData();
-        formData.append("productName", updatedProduct.productName);
-        formData.append("productPrice", updatedProduct.productPrice);
-        formData.append("description", updatedProduct.description);
-        formData.append("productCategory", updatedProduct.productCategory);
-        formData.append("productCount", updatedProduct.productCount);
-        newImages.forEach((img) => img && formData.append("image", img));
+    // Agar images update ho rahi hain → FormData bhejo
+    if (newImages.length > 0) {
+      const formData = new FormData();
+      formData.append("productName", updatedProduct.productName);
+      formData.append("productPrice", updatedProduct.productPrice);
+      formData.append("description", updatedProduct.description);
+      formData.append("productCategory", updatedProduct.productCategory);
+      formData.append("productCount", updatedProduct.productCount);
 
-        res = await fetch(
-          `http://localhost:3000/products/update-product/${id}`,
-          { method: "PATCH", body: formData }
-        );
-      } else {
-        res = await fetch(
-          `http://localhost:3000/products/update-product/${id}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedProduct),
-          }
-        );
-      }
+      newImages.forEach((img) => img && formData.append("image", img));
 
-      if (res.ok) {
-        fetchProducts();
-        setUpdatedImages((prev) => ({ ...prev, [id]: [] }));
-      } else alert("Failed to update product");
-    } catch (error) {
-      console.error("Error updating product:", error);
+      res = await fetch(
+        `http://localhost:3000/products/update-product/${id}`,
+        {
+          method: "PATCH",
+          body: formData,
+        }
+      );
+    } else {
+      // Agar images change nahi hui → JSON bhejo
+      // Server ko ensure karo ki content-type application/json accept karta hai
+      res = await fetch(
+        `http://localhost:3000/products/update-product/${id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productName: updatedProduct.productName,
+            productPrice: updatedProduct.productPrice,
+            description: updatedProduct.description,
+            productCategory: updatedProduct.productCategory,
+            productCount: updatedProduct.productCount,
+          }),
+        }
+      );
     }
-  };
+
+    if (res.ok) {
+      fetchProducts(); // Refresh products list
+      setUpdatedImages((prev) => ({ ...prev, [id]: [] }));
+      alert("Product updated successfully!");
+    } else {
+      const errData = await res.json();
+      alert(errData.message || "Failed to update product");
+    }
+  } catch (error) {
+    console.error("Error updating product:", error);
+    alert("Something went wrong while updating product");
+  }
+};
+
 
   const handleDelete = async (id) => {
-    try {
-      const res = await fetch(
-        `http://localhost:3000/products/delete-product/${id}`,
-        { method: "DELETE" }
-      );
-      if (res.ok) fetchProducts();
-      else alert("Failed to delete product");
-    } catch (error) {
-      console.error("Error deleting product:", error);
+  try {
+    const res = await fetch(`http://localhost:3000/products/delete-product/${id}`, {
+      method: "DELETE",
+    });
+    const data = await res.json(); // <- backend ka error message
+    if (res.ok) {
+      alert("Product deleted successfully!");
+      fetchProducts(); // Refresh products
+    } else {
+      alert(data.error || "Failed to delete product"); // <- proper backend error show kare
     }
-  };
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    alert("Something went wrong while deleting product");
+  }
+};
+
 
   const handleChange = (id, field, value) => {
     setProducts((prev) =>

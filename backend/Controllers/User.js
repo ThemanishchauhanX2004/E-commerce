@@ -86,20 +86,18 @@ export async function login(req, res) {
 
     let token = jwt.sign({ id: user._id }, process.env.secret_key, { expiresIn: "1d" });
 
-    res.cookie("token", token, {
-      secure: true,
-      sameSite: "none",
-    }).json({
-      message: "Logged in successfully",
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userName: user.userName,
-        Cartvalue: user.Cartvalue
-      },
-      isAdmin: false,
-    });
+    res.cookie("token", token, { secure: true, sameSite: "none" }).json({
+  message: "Logged in successfully",
+  user: {
+    id: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    userName: user.userName,
+    Cartvalue: user.Cartvalue,
+  },
+  isAdmin: user.isAdmin, // <-- yaha admin flag
+});
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error", error: err.message });

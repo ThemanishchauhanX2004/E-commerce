@@ -22,15 +22,18 @@ export default function App() {
     <ContextProvider>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Shop />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/shop/:category" element={<ShopCategory />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/admin" element={<AdminPanel />} />
-      </Routes>
+  <Route path="/" element={<Shop />} />
+  <Route path="/shop" element={<Shop />} />
+  <Route path="/shop/:category" element={<ShopCategory />} />
+  <Route path="/profile" element={<Profile />} />
+  <Route path="/cart" element={<Cart />} />
+  <Route path="/checkout" element={<Checkout />} />
+  <Route path="/orders" element={<Orders />} />
+
+  {/* 🔥 Admin route fix */}
+  <Route path="/adminpanel" element={<AdminPanel />} />
+</Routes>
+
     </ContextProvider>
   );
 }

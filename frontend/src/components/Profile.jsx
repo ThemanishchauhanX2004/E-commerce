@@ -13,7 +13,7 @@ export default function Profile() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(null);
-  const [showLogin, setShowLogin] = useState(false); // true -> show login form
+  const [showLogin, setShowLogin] = useState(false);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -31,10 +31,10 @@ export default function Profile() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch(
-          "https://e-commerce-1-km7j.onrender.com/Profile",
-          { method: "GET", credentials: "include" }
-        );
+        const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/Profile", {
+          method: "GET",
+          credentials: "include",
+        });
         if (!res.ok) {
           setIsLoggedIn(false);
           return;
@@ -43,60 +43,50 @@ export default function Profile() {
         if (data.user) {
           setIsLoggedIn(true);
           setLoggedInUser(data.user);
+
+          // Agar already logged in user admin hai → redirect
+          if (data.user.isAdmin) {
+            navigate("/adminpanel");
+          }
         }
       } catch (err) {
         console.error("Failed to fetch profile:", err);
       }
     }
     fetchProfile();
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
   // =========================
   // LOGIN FUNCTION
   // =========================
   const handleLogin = async () => {
     try {
-      const res = await fetch(
-        "https://e-commerce-1-km7j.onrender.com/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ userName: form.userName, password: form.password }),
-        }
-      );
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userName: form.userName, password: form.password }),
+      });
+
       const data = await res.json();
+
       if (res.ok) {
         setIsLoggedIn(true);
         setLoggedInUser(data.user);
         setForm({ ...form, password: "" });
         alert("Login successful!");
+
+        if (data.isAdmin) {
+          navigate("/adminpanel"); // Admin login → admin panel
+        } else {
+          navigate("/profile"); // Normal user → profile
+        }
       } else {
         alert(data.message || "Login failed!");
       }
     } catch (err) {
       console.error("Login failed:", err);
       alert("Something went wrong. Try again.");
-    }
-  };
-
-  // =========================
-  // LOGOUT FUNCTION
-  // =========================
-  const handleLogout = async () => {
-    try {
-      const res = await fetch(
-        "https://e-commerce-1-km7j.onrender.com/logout",
-        { method: "POST", credentials: "include" }
-      );
-      if (res.ok) {
-        setIsLoggedIn(false);
-        setLoggedInUser(null);
-        dispatch({ type: "set-cart", payload: { products: [], totalPrice: 0, totalShipping: 0 } });
-        navigate("/");
-      }
-    } catch (err) {
-      console.error("Logout failed:", err);
     }
   };
 
@@ -112,7 +102,7 @@ export default function Profile() {
       formData.append("password", form.password);
       if (form.picture) formData.append("picture", form.picture);
 
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/signup", {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/signup", {
         method: "POST",
         body: formData,
         credentials: "include",
@@ -122,13 +112,38 @@ export default function Profile() {
       if (res.ok) {
         alert("Signup successful! Please login.");
         setForm({ firstName: "", lastName: "", userName: "", password: "", picture: null });
-        setShowLogin(true); // redirect to login after signup
+        setShowLogin(true); // show login after signup
       } else {
         alert(data.message || "Signup failed!");
       }
     } catch (err) {
       console.error("Signup failed:", err);
       alert("Something went wrong. Try again.");
+    }
+  };
+
+  // =========================
+  // LOGOUT FUNCTION
+  // =========================
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setIsLoggedIn(false);
+        setLoggedInUser(null);
+        dispatch({
+          type: "set-cart",
+          payload: { products: [], totalPrice: 0, totalShipping: 0 },
+        });
+        navigate("/");
+      } else {
+        console.error("Logout failed:", res.status);
+      }
+    } catch (err) {
+      console.error("Logout failed:", err);
     }
   };
 

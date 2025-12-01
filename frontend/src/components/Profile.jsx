@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import "../stylesheets/Profile.css";
-import { MdCameraEnhance } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { FaUser } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import Signup from "./auth/Signup";
+import Login from "./auth/Login";
+import ProfileView from "./ProfileView";
 
-function Profile() {
+export default function Profile() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -16,528 +16,141 @@ function Profile() {
     lastName: "",
     userName: "",
     password: "",
-    picture: "",
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [showSignup, setShowSignup] = useState(true);
-  const [attempts, setAttempts] = useState(0);
-  const [lockTime, setLockTime] = useState(null);
-  const [passwordError, setPasswordError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({
-    firstName: "",
-    lastName: "",
-    userName: "",
-    password: "",
     picture: null,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [editMode, setEditMode] = useState(false);
 
- 
   useEffect(() => {
-    async function checkLogin() {
+    // Fetch profile info if logged in
+    async function fetchProfile() {
       try {
-        const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/getProfile", {
+        const res = await fetch("https://e-commerce-1-km7j.onrender.com/profile", {
           method: "GET",
           credentials: "include",
         });
         const data = await res.json();
-        if (res.ok) {
+        if (res.ok && data.user) {
           setIsLoggedIn(true);
           setLoggedInUser(data.user);
-          dispatch({
-            type: "user-login",
-            payload: {
-              id: data.user._id,
-              name: data.user.firstName + " " + data.user.lastName,
-              email: data.user.email,
-            },
-          });
+        } else {
+          setIsLoggedIn(false);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch profile:", err);
       }
     }
-    checkLogin();
+    fetchProfile();
   }, [dispatch]);
 
-  const validatePassword = (value) => {
-    const strongPassword =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$/;
-    if (!strongPassword.test(value)) {
-      setPasswordError(
-        " Password must include uppercase, lowercase, number & special char"
-      );
-    } else {
-      setPasswordError("");
-    }
-  };
-
   const handleSignup = async () => {
-    if (passwordError) {
-      alert("Please enter a strong password before signing up!");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("firstName", form.firstName);
-    formData.append("lastName", form.lastName);
-    formData.append("userName", form.userName);
-    formData.append("password", form.password);
-    if (form.picture) {
-      formData.append("picture", form.picture);
-    }
-
-    try {
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/signup", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-      const data = await res.json();
-
-      if (res.status === 201) {
-        setLoading(true);
-        setTimeout(() => {
-          setLoading(false);
-          setShowSignup(false);
-          alert(data.message || "Signup successful!");
-          setLoggedInUser(data.user);
-          dispatch({
-            type: "user-login",
-            payload: {
-              id: data.user._id,
-              name: data.user.firstName + " " + data.user.lastName,
-              email: data.user.email,
-            },
-          });
-        }, 2000);
-      } else {
-        alert(data.error || data.message || "Signup failed");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Please check your connection.");
-    }
+    // TODO: Add signup logic
   };
 
   const handleLogin = async () => {
-    if (lockTime && Date.now() - lockTime < 2 * 60 * 1000) {
-      alert("Too many failed attempts. Please try again after 2 minutes.");
-      return;
-    }
-
-    try {
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          userName: form.userName,
-          password: form.password,
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setAttempts(0);
-        setIsLoggedIn(true);
-
-        if (data.isAdmin) {
-          dispatch({
-            type:"admin",
-            payload:true 
-          })
-          navigate("/admin");
-          return;
-        }
-
-        const profileRes = await fetch(
-          "https://e-commerce-1-km7j.onrender.com/user/getProfile",
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
-        const profileData = await profileRes.json();
-        setLoggedInUser(profileData.user);
-
-        dispatch({
-          type: "user-login",
-          payload: {
-            id: profileData.user._id,
-            name: profileData.user.firstName + " " + profileData.user.lastName,
-            email: profileData.user.email,
-          },
-        });
-
-         dispatch({
-          type:"productAdd",
-          payload:{
-            isAdding: true
-          }
-         })
-      } else {
-        setAttempts((prev) => prev + 1);
-        if (attempts + 1 >= 3) {
-          setLockTime(Date.now());
-          alert("Too many failed attempts! Try again in 2 minutes.");
-          return;
-        }
-        alert(data.error || "Login failed");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Please check your connection.");
-    }
+    // TODO: Add login logic
   };
 
-
-
-  
   const handleLogout = async () => {
     try {
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/logout", {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/logout", {
         method: "POST",
         credentials: "include",
       });
       if (res.ok) {
         setIsLoggedIn(false);
         setLoggedInUser(null);
-        setForm({
-          firstName: "",
-          lastName: "",
-          userName: "",
-          password: "",
-          picture: null,
-        });
-        setShowSignup(true);
-        dispatch({
-          type: "user-login",
-          payload: { id: null, name: "", email: "" },
-        });
-
-         dispatch({
-          type:"productAdd",
-          payload:{
-        isAdding:true
-      }
-         })
+        dispatch({ type: "set-cart", payload: { products: [], totalPrice: 0, totalShipping: 0 } });
+        navigate("/");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Logout failed:", err);
     }
   };
 
-  const handleUpdateProfile = async () => {
-    const updatedForm = new FormData();
-    updatedForm.append(
-      "firstName",
-      editForm.firstName || loggedInUser.firstName
-    );
-    updatedForm.append("lastName", editForm.lastName || loggedInUser.lastName);
-    updatedForm.append("userName", editForm.userName || loggedInUser.userName);
-    if (editForm.password) updatedForm.append("password", editForm.password);
-    if (editForm.picture) updatedForm.append("picture", editForm.picture);
-
-    try {
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/updateProfile", {
-        method: "PUT",
-        credentials: "include",
-        body: updatedForm,
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("Profile updated successfully!");
-        setLoggedInUser(data.user);
-        dispatch({
-          type: "user-login",
-          payload: {
-            id: data.user._id,
-            name: data.user.firstName + " " + data.user.lastName,
-            email: data.user.email,
-          },
-        });
-        setEditMode(false);
-        setEditForm({
-          firstName: "",
-          lastName: "",
-          userName: "",
-          password: "",
-          picture: null,
-        });
-      } else {
-        alert(data.message || data.error || "Failed to update profile");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong.");
-    }
-  };
+  // =========================
+  // RENDERING
+  // =========================
 
   if (!isLoggedIn) {
     return (
-      <div className="auth-page">
-        <div className="auth-card">
-          <div className="auth-panel">
-            {loading ? (
-              <>
-                <div className="small-muted">⏳ Creating your account...</div>
-                <div className="loader">
-                  <i />
-                </div>
-              </>
-            ) : (
-              <>
-                {showSignup && (
-                  <div className="form-block">
-                    <h2>Signup</h2>
-                    <div className="form-grid">
-                      <input
-                        className="input"
-                        placeholder="First Name"
-                        onChange={(e) =>
-                          setForm({ ...form, firstName: e.target.value })
-                        }
-                      />
-                      <input
-                        className="input"
-                        placeholder="Last Name"
-                        onChange={(e) =>
-                          setForm({ ...form, lastName: e.target.value })
-                        }
-                      />
-                      <input
-                        className="input"
-                        placeholder="Username"
-                        onChange={(e) =>
-                          setForm({ ...form, userName: e.target.value })
-                        }
-                      />
-                      <div style={{ position: "relative" }}>
-                        <input
-                          className="input"
-                          placeholder="Password"
-                          type={showPassword ? "text" : "password"}
-                          onChange={(e) => {
-                            setForm({ ...form, password: e.target.value });
-                            validatePassword(e.target.value);
-                          }}
-                        />
-                        <span
-                          onClick={() => setShowPassword(!showPassword)}
-                          style={{
-                            position: "absolute",
-                            right: "12px",
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            cursor: "pointer",
-                            color: "rgba(250,250,250,0.6)",
-                          }}
-                        >
-                          {showPassword ? "🙈" : "👁️"}
-                        </span>
-                      </div>
-                      {passwordError && (
-                        <p
-                          style={{
-                            color: "red",
-                            fontSize: "12px",
-                            marginTop: "4px",
-                          }}
-                        >
-                          {passwordError}
-                        </p>
-                      )}
-                      <div className="profile-pic">
-                        <label>Profile:</label>
-                        <input
-                          type="file"
-                          onChange={(e) =>
-                            setForm({ ...form, picture: e.target.files[0] })
-                          }
-                        />
-                      </div>
-                      <button
-                        className="btn btn-primary"
-                        onClick={handleSignup}
-                      >
-                        Signup
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="hr" />
-
-                <div className="form-block">
-                  <h2>Login</h2>
-                  <div className="form-grid">
-                    <input
-                      className="input"
-                      placeholder="Username"
-                      onChange={(e) =>
-                        setForm({ ...form, userName: e.target.value })
-                      }
-                    />
-                    <div style={{ position: "relative" }}>
-                      <input
-                        className="input"
-                        placeholder="Password"
-                        type={showPassword ? "text" : "password"}
-                        onChange={(e) =>
-                          setForm({ ...form, password: e.target.value })
-                        }
-                      />
-                      <span
-                        onClick={() => setShowPassword(!showPassword)}
-                        style={{
-                          position: "absolute",
-                          right: "12px",
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          cursor: "pointer",
-                          color: "rgba(250,250,250,0.6)",
-                        }}
-                      >
-                        {showPassword ? "🙈" : "👁️"}
-                      </span>
-                    </div>
-                    <div className="row">
-                      <button className="btn btn-primary" onClick={handleLogin}>
-                        Login
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+      <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
+        <div className="bg-white shadow-lg rounded-lg p-6 max-w-md w-full">
+          <Signup
+            form={form}
+            setForm={setForm}
+            handleSignup={handleSignup}
+            passwordError={passwordError}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+          />
+          <div className="my-4 border-t border-gray-300"></div>
+          <Login
+            form={form}
+            setForm={setForm}
+            handleLogin={handleLogin}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+          />
         </div>
       </div>
     );
   }
 
-  // ✅ PROFILE SECTION
   return (
-    <div className="auth-page">
-      <div className="profile-card">
-        <div className="welcome-card">
-          <div style={{ display: "flex", gap: "20px" }}>
-            <button
-              style={{ color: "white" }}
-              onClick={() => navigate("/orders")}
-            >
-              my orders
-            </button>
-            <button
-              style={{ color: "white" }}
-              onClick={() => navigate("/cart")}
-            >
-              my cart
-            </button>
-            <button
-              style={{ color: "white" }}
-              onClick={() => setEditMode(true)}
-            >
-              edit profile
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-100 px-4 py-10">
+      <div className="max-w-4xl mx-auto">
+        <ProfileView
+          loggedInUser={loggedInUser}
+          handleLogout={handleLogout}
+          navigate={navigate}
+          setEditMode={setEditMode}
+        />
 
-          <div className="picture-div">
-            <FaUser />
-            <img src={loggedInUser?.picture} alt="" className="picture" />
-            <button className="edit-icon">
-              <MdCameraEnhance />
-            </button>
-          </div>
-
-          <h2>
-            Welcome {loggedInUser?.firstName} {loggedInUser?.lastName}
-          </h2>
-          <p className="small-muted">Username: {loggedInUser?.userName}</p>
-
-          <div style={{ marginTop: 12 }}>
-            <button className="btn btn-primary" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {editMode && (
-        <div className="edit-modal">
-          <div className="edit-card">
-            <h2>Edit Profile</h2>
-            <input
-              className="input"
-              placeholder="First Name"
-              value={editForm.firstName || loggedInUser.firstName}
-              onChange={(e) =>
-                setEditForm({ ...editForm, firstName: e.target.value })
-              }
-            />
-            <input
-              className="input"
-              placeholder="Last Name"
-              value={editForm.lastName || loggedInUser.lastName}
-              onChange={(e) =>
-                setEditForm({ ...editForm, lastName: e.target.value })
-              }
-            />
-            <input
-              className="input"
-              placeholder="Username"
-              value={editForm.userName || loggedInUser.userName}
-              onChange={(e) =>
-                setEditForm({ ...editForm, userName: e.target.value })
-              }
-            />
-            <input
-              className="input"
-              placeholder="New Password (optional)"
-              type="password"
-              value={editForm.password}
-              onChange={(e) =>
-                setEditForm({ ...editForm, password: e.target.value })
-              }
-            />
-            <div className="profile-pic">
-              <label>Update Picture:</label>
-              <input
-                type="file"
-                onChange={(e) =>
-                  setEditForm({ ...editForm, picture: e.target.files[0] })
-                }
-              />
-            </div>
-            <div className="btn-row">
-              <button className="btn btn-primary" onClick={handleUpdateProfile}>
-                Save
-              </button>
+        {/* Edit Modal */}
+        {editMode && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-lg relative">
+              <h3 className="text-xl font-bold mb-4">Edit Profile</h3>
+              {/* Add your edit profile form fields here */}
               <button
-                className="btn"
-                onClick={() => {
-                  setEditMode(false);
-                  setEditForm({
-                    firstName: "",
-                    lastName: "",
-                    userName: "",
-                    password: "",
-                    picture: null,
-                  });
-                }}
+                onClick={() => setEditMode(false)}
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold"
               >
-                Cancel
+                ✕
               </button>
+              <form className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="First Name"
+                  value={form.firstName}
+                  onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                />
+                <input
+                  type="text"
+                  placeholder="Last Name"
+                  value={form.lastName}
+                  onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                />
+                <input
+                  type="file"
+                  onChange={(e) => setForm({ ...form, picture: e.target.files[0] })}
+                  className="w-full"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded font-bold"
+                >
+                  Save Changes
+                </button>
+              </form>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
-
-export default Profile;

@@ -14,25 +14,19 @@ export default function ShopCategory() {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/getProfile", {
-          method: "GET",
-          credentials: "include",
-        });
+        const res = await fetch(
+          "https://e-commerce-1-km7j.onrender.com/user/getProfile",
+          { method: "GET", credentials: "include" }
+        );
         const data = await res.json();
         if (res.ok && data.user) {
-          setUser({
+          const userData = {
             id: data.user._id,
             name: data.user.firstName + " " + data.user.lastName,
             userName: data.user.userName,
-          });
-          dispatch({
-            type: "set-user",
-            payload: {
-              id: data.user._id,
-              name: data.user.firstName + " " + data.user.lastName,
-              userName: data.user.userName,
-            },
-          });
+          };
+          setUser(userData);
+          dispatch({ type: "set-user", payload: userData });
         } else setUser(null);
       } catch (err) {
         console.error("Failed to check login:", err);
@@ -40,117 +34,80 @@ export default function ShopCategory() {
       }
     };
     checkLogin();
-  }, []);
+  }, [dispatch]);
 
   const filteredProducts = values.filter(
     (product) => product.productCategory.toLowerCase() === category.toLowerCase()
   );
 
+  const addToCart = async (product) => {
+    if (!user?.id) return alert("Please login to add items to the cart!");
+    if (product.productCount <= 0) return alert("This product is out of stock!");
 
-const addToCart = async (product) => {
-  if (!user?.id) {
-    alert("Please login to add items to the cart!");
-    return;
-  }
+    const shippingCost = product.productPrice >= 1000 ? 0 : 50;
 
+    try {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          userId: user.id,
+          productId: product._id,
+          price: product.productPrice,
+          shipping: shippingCost,
+        }),
+      });
 
-  if (product.productCount <= 0) {
-    alert("This product is out of stock!");
-    return;
-  }
+      const data = await res.json();
 
-  const shippingCost = product.productPrice >= 1000 ? 0 : 50;
+      if (!res.ok) return alert(data.error || "Failed to add to cart!");
 
-  try {
-    const res = await fetch("https://e-commerce-1-km7j.onrender.com/cart/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        userId: user.id,
-        productId: product._id,
-        price: product.productPrice,
-        shipping: shippingCost,
-      }),
-    });
+      dispatch({
+        type: "product-add",
+        payload: { item: product, price: product.productPrice, shipping: shippingCost, userId: user.id },
+      });
+      dispatch({ type: "productAdd", payload: { isAdding: true } });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-    
-      alert(data.error || "Failed to add to cart!");
-      return;
+      alert("✅ Item added to cart successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Something went wrong while adding to cart!");
     }
-
- 
-    dispatch({
-      type: "product-add",
-      payload: {
-        item: product,
-        price: product.productPrice,
-        shipping: shippingCost,
-        userId: user.id,
-      },
-    });
-
-    dispatch({
-      type:"productAdd",
-      payload:{
-        isAdding:true
-      }
-    })
-
-    alert("Item added to cart successfully!");
-  } catch (err) {
-    console.error(err);
-    alert("Something went wrong while adding to cart!");
-  }
-};
-
+  };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Shop for: {category}</h2>
+    <div className="px-4 py-8 max-w-7xl mx-auto">
+      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
+        Shop for: <span className="text-green-600">{category}</span>
+      </h2>
+
       {filteredProducts.length > 0 ? (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "20px",
-          }}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredProducts.map((p) => (
             <div
               key={p._id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "10px",
-                borderRadius: "8px",
-              }}
+              className="border rounded-lg shadow-sm p-4 hover:shadow-lg transition-shadow duration-300 bg-white flex flex-col"
             >
-              <h3>{p.productName}</h3>
-              <p>Price: ₹{p.productPrice}</p>
-              <p>{p.description}</p>
-              {Array.isArray(p.productImage) &&
-                p.productImage.map((img, idx) => (
-                  <img
-                    key={idx}
-                    src={img}
-                    alt={p.productName}
-                    style={{ width: "100%", marginBottom: "5px" }}
-                  />
-                ))}
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold mb-2">{p.productName}</h3>
+                <p className="text-gray-700 mb-1">Price: ₹{p.productPrice}</p>
+                <p className="text-gray-600 mb-2">{p.description}</p>
+
+                {Array.isArray(p.productImage) &&
+                  p.productImage.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={p.productName}
+                      className="w-full h-40 object-cover mb-2 rounded"
+                    />
+                  ))}
+              </div>
+
               <button
                 onClick={() => addToCart(p)}
-                style={{
-                  marginTop: "10px",
-                  padding: "8px 12px",
-                  backgroundColor: "#4CAF50",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
+                className="mt-2 w-full py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition-colors duration-300"
               >
                 Add to Cart
               </button>
@@ -158,7 +115,7 @@ const addToCart = async (product) => {
           ))}
         </div>
       ) : (
-        <p>No products found in this category.</p>
+        <p className="text-gray-500 text-center">No products found in this category.</p>
       )}
     </div>
   );

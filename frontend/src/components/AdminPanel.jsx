@@ -1,9 +1,5 @@
-
-
-
-
-
 import { useEffect, useState } from "react";
+import { Edit2, Trash2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 
 function AdminPanel() {
@@ -16,25 +12,21 @@ function AdminPanel() {
     count: 0,
     category: "Men",
   });
+  const [updatedImages, setUpdatedImages] = useState({});
 
-  const dispatch= useDispatch()
+  const dispatch = useDispatch();
+  const isAdmin = useSelector((state) => state.isAdmin);
 
-const isAdmin=   useSelector(state=>state.isAdmin)
-  useEffect(()=>{
-    window.addEventListener("beforeunload", ()=>{
-dispatch({
-  type:"admin",
-  payload: false 
-})
-    })
-  })
-
-
-  const [updatedImages, setUpdatedImages] = useState([]);
+  useEffect(() => {
+    fetchProducts();
+    window.addEventListener("beforeunload", () => {
+      dispatch({ type: "admin", payload: "false" });
+    });
+  }, []);
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/products");
+      const res = await fetch("http://localhost:3000/products");
       const data = await res.json();
       setProducts(Array.isArray(data.products) ? data.products : []);
     } catch (error) {
@@ -42,33 +34,24 @@ dispatch({
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   const handleAdd = async () => {
     if (!newProduct.image[0] && !newProduct.image[1]) {
       alert("Please select at least 1 image!");
       return;
     }
-
     const formData = new FormData();
     formData.append("productName", newProduct.name);
     formData.append("productPrice", newProduct.price);
     formData.append("description", newProduct.description);
     formData.append("productCategory", newProduct.category);
     formData.append("productCount", newProduct.count);
-
-    newProduct.image.forEach((img) => {
-      if (img) formData.append("image", img);
-    });
+    newProduct.image.forEach((img) => img && formData.append("image", img));
 
     try {
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/products/add-product", {
+      const res = await fetch("http://localhost:3000/products/add-product", {
         method: "POST",
         body: formData,
       });
-
       if (res.ok) {
         setNewProduct({
           name: "",
@@ -79,9 +62,7 @@ dispatch({
           category: "Men",
         });
         fetchProducts();
-      } else {
-        alert("Failed to add product");
-      }
+      } else alert("Failed to add product");
     } catch (error) {
       console.error("Error adding product:", error);
     }
@@ -90,8 +71,8 @@ dispatch({
   const handleUpdate = async (id, updatedProduct) => {
     try {
       const newImages = updatedImages[id] || [];
-
       let res;
+
       if (newImages.length > 0) {
         const formData = new FormData();
         formData.append("productName", updatedProduct.productName);
@@ -101,24 +82,25 @@ dispatch({
         formData.append("productCount", updatedProduct.productCount);
         newImages.forEach((img) => img && formData.append("image", img));
 
-        res = await fetch(`https://e-commerce-1-km7j.onrender.com/products/update-product/${id}`, {
-          method: "PATCH",
-          body: formData,
-        });
+        res = await fetch(
+          `http://localhost:3000/products/update-product/${id}`,
+          { method: "PATCH", body: formData }
+        );
       } else {
-        res = await fetch(`https://e-commerce-1-km7j.onrender.com/products/update-product/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedProduct),
-        });
+        res = await fetch(
+          `http://localhost:3000/products/update-product/${id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedProduct),
+          }
+        );
       }
 
       if (res.ok) {
         fetchProducts();
         setUpdatedImages((prev) => ({ ...prev, [id]: [] }));
-      } else {
-        alert("Failed to update product");
-      }
+      } else alert("Failed to update product");
     } catch (error) {
       console.error("Error updating product:", error);
     }
@@ -126,9 +108,10 @@ dispatch({
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`https://e-commerce-1-km7j.onrender.com/products/delete-product/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `http://localhost:3000/products/delete-product/${id}`,
+        { method: "DELETE" }
+      );
       if (res.ok) fetchProducts();
       else alert("Failed to delete product");
     } catch (error) {
@@ -143,161 +126,181 @@ dispatch({
   };
 
   return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
+        🛒 Admin Panel
+      </h1>
 
-    <>
-    {
- isAdmin?(
+      {/* Add Product */}
+      <div className="bg-white shadow-md rounded-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="flex flex-col gap-3">
+          <label className="font-medium text-gray-700">Image 1</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) =>
+              setNewProduct({
+                ...newProduct,
+                image: [e.target.files[0], newProduct.image[1]],
+              })
+            }
+            className="border rounded-lg px-3 py-2"
+          />
+          <label className="font-medium text-gray-700">Image 2</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) =>
+              setNewProduct({
+                ...newProduct,
+                image: [newProduct.image[0], e.target.files[0]],
+              })
+            }
+            className="border rounded-lg px-3 py-2"
+          />
+        </div>
 
-<div style={{ padding: "20px" }}>
-      <h1>🛒 Admin Panel - Product Management</h1>
-      <table border="1" cellPadding="10" style={{ borderCollapse: "collapse", width: "100%" }}>
-        <thead>
-          <tr>
-            <th>Image URLs</th>
-            <th>Name</th>
-            <th>Price (₹)</th>
-            <th>Description</th>
-            <th>Count</th>
-            <th>Category</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.length > 0 ? (
-            products.map((p) => (
-              <tr key={p._id}>
-                <td>
-                  {Array.isArray(p.productImage)
-                    ? p.productImage.map((img, idx) => (
-                        <img
-                          key={idx}
-                          src={img}
-                          alt="product"
-                          style={{ width: "60px", height: "60px", borderRadius: "8px", marginRight: "5px" }}
-                        />
-                      ))
-                    : <img src={p.productImage} alt="product" style={{ width: "60px", height: "60px" }} />}
-                  <div>
-                    <label>Change Image 1:</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setUpdatedImages((prev) => ([
+        <div className="flex flex-col gap-3 md:col-span-2">
+          <input
+            type="text"
+            placeholder="Name"
+            value={newProduct.name}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, name: e.target.value })
+            }
+            className="border rounded-lg px-3 py-2 w-full"
+          />
+          <input
+            type="number"
+            placeholder="Price"
+            value={newProduct.price}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, price: e.target.value })
+            }
+            className="border rounded-lg px-3 py-2 w-full"
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={newProduct.description}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, description: e.target.value })
+            }
+            className="border rounded-lg px-3 py-2 w-full"
+          />
+          <input
+            type="number"
+            placeholder="Count"
+            value={newProduct.count}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, count: e.target.value })
+            }
+            className="border rounded-lg px-3 py-2 w-full"
+          />
+          <select
+            value={newProduct.category}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, category: e.target.value })
+            }
+            className="border rounded-lg px-3 py-2 w-full"
+          >
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+            <option value="Kids">Kids</option>
+          </select>
+          <button
+            onClick={handleAdd}
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg w-full"
+          >
+            ➕ Add Product
+          </button>
+        </div>
+      </div>
 
-                        
-                          ...prev,
-                        {   [p._id]: [e.target.files[0], prev[p._id]?.[0] ]},
-                        ]))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label>Change Image 2:</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setUpdatedImages((prev) => ({
-                          ...prev,
-                          [p._id]: [prev[p._id]?.[0] || null, e.target.files[0]],
-                        }))
-                      }
-                    />
-                  </div>
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={p.productName}
-                    onChange={(e) => handleChange(p._id, "productName", e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={p.productPrice}
-                    onChange={(e) => handleChange(p._id, "productPrice", e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={p.description}
-                    onChange={(e) => handleChange(p._id, "description", e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={p.productCount}
-                    onChange={(e) => handleChange(p._id, "productCount", e.target.value)}
-                  />
-                </td>
-                <td>
-                  <select
-                    value={p.productCategory}
-                    onChange={(e) => handleChange(p._id, "productCategory", e.target.value)}
-                  >
-                    <option value="Men">Men</option>
-                    <option value="Women">Women</option>
-                    <option value="Kids">Kids</option>
-                  </select>
-                </td>
-                <td>
-                  <button onClick={() => handleUpdate(p._id, p)}>✅ Update</button>
-                  <button onClick={() => handleDelete(p._id)}>🗑️ Delete</button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr><td colSpan={7}>No products found</td></tr>
-          )}
-
-       
-          <tr>
-            <td>
-              <div>
-                <label>Image 1:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, image: [e.target.files[0], newProduct.image[1]] })
-                  }
-                />
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products.length > 0 ? (
+          products.map((p) => (
+            <div
+              key={p._id}
+              className="bg-white shadow-md rounded-xl p-4 flex flex-col gap-3"
+            >
+              <div className="flex gap-2 overflow-x-auto">
+                {Array.isArray(p.productImage)
+                  ? p.productImage.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        alt="product"
+                        className="w-20 h-20 object-cover rounded-md border"
+                      />
+                    ))
+                  : p.productImage && (
+                      <img
+                        src={p.productImage}
+                        alt="product"
+                        className="w-20 h-20 object-cover rounded-md border"
+                      />
+                    )}
               </div>
-              <div>
-                <label>Image 2:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, image: [newProduct.image[0], e.target.files[0]] })
-                  }
-                />
-              </div>
-            </td>
-            <td><input type="text" placeholder="Name" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} /></td>
-            <td><input type="number" placeholder="Price" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} /></td>
-            <td><input type="text" placeholder="Description" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} /></td>
-            <td><input type="number" placeholder="Count" value={newProduct.count} onChange={(e) => setNewProduct({ ...newProduct, count: e.target.value })} /></td>
-            <td>
-              <select value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}>
+
+              <input
+                type="text"
+                value={p.productName}
+                onChange={(e) => handleChange(p._id, "productName", e.target.value)}
+                className="border rounded-lg px-3 py-2"
+              />
+              <input
+                type="number"
+                value={p.productPrice}
+                onChange={(e) => handleChange(p._id, "productPrice", e.target.value)}
+                className="border rounded-lg px-3 py-2"
+              />
+              <input
+                type="text"
+                value={p.description}
+                onChange={(e) => handleChange(p._id, "description", e.target.value)}
+                className="border rounded-lg px-3 py-2"
+              />
+              <input
+                type="number"
+                value={p.productCount}
+                onChange={(e) => handleChange(p._id, "productCount", e.target.value)}
+                className="border rounded-lg px-3 py-2"
+              />
+              <select
+                value={p.productCategory}
+                onChange={(e) =>
+                  handleChange(p._id, "productCategory", e.target.value)
+                }
+                className="border rounded-lg px-3 py-2"
+              >
                 <option value="Men">Men</option>
                 <option value="Women">Women</option>
                 <option value="Kids">Kids</option>
               </select>
-            </td>
-            <td><button onClick={handleAdd}>➕ Add</button></td>
-          </tr>
-        </tbody>
-      </table>
-      
+
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => handleUpdate(p._id, p)}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg flex items-center justify-center gap-2"
+                >
+                  <Edit2 size={16} /> Update
+                </button>
+                <button
+                  onClick={() => handleDelete(p._id)}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={16} /> Delete
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="col-span-full text-center text-gray-500">No products found</p>
+        )}
+      </div>
     </div>
- ) : <p> login as admin to proceed...</p>
-}
-     </>
   );
 }
 

@@ -1,97 +1,110 @@
+// Navbar.jsx
 import { TiShoppingCart } from "react-icons/ti";
 import { CgProfile } from "react-icons/cg";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
-import "../stylesheets/Navbar.css";
 
 export default function Navbar() {
   const location = useLocation();
   const dispatch = useDispatch();
- let status = useSelector(state=>state.isProductAdd)
+  const status = useSelector((state) => state.isProductAdd);
 
   const [userName, setUserName] = useState("");
-const [cartt, setCart]= useState(0)
-  useEffect(() => {
-    console.log(status);
-    
-    // Backend se login check aur user info fetch
-    const fetchUser = async () => {
+  const [cartCount, setCartCount] = useState(0);
 
-         dispatch({
-            type:"productAdd",
-            payload:{
-              isAdding: false
-            }
-          })
+  useEffect(() => {
+    dispatch({ type: "productAdd", payload: { isAdding: false } });
+
+    const fetchUser = async () => {
       try {
-        const res = await fetch("https://e-commerce-1-km7j.onrender.com/user/getProfile", {
-          method: "GET",
-          credentials: "include", // cookies ke liye
-        });
+        const res = await fetch(
+          "https://e-commerce-1-km7j.onrender.com/user/getProfile",
+          { method: "GET", credentials: "include" }
+        );
         const data = await res.json();
-        console.log(data);
-        
-        setCart(data.user.Cartvalue)
+
         if (res.ok && data.user) {
-          const name = data.user.firstName + " " + data.user.lastName;
-setUserName(name)
+          const name = `${data.user.firstName} ${data.user.lastName}`;
+          setUserName(name);
+          setCartCount(data.user.Cartvalue || 0);
+
           dispatch({
             type: "set-user",
-            payload: {
-              id: data.user._id,
-              name,
-              email: data.user.email,
-            },
+            payload: { id: data.user._id, name, email: data.user.email },
           });
-
-       
         } else {
-          setUserName(""); 
-              dispatch({
-            type:"productAdd",
-            payload:{
-              isAdding: false
-            }
-          })
+          setUserName("");
+          setCartCount(0);
         }
       } catch (err) {
         console.error("Failed to fetch user:", err);
         setUserName("");
-      } };
-     fetchUser();
-  }, [ status]);
+        setCartCount(0);
+      }
+    };
 
+    fetchUser();
+  }, [status, dispatch]);
 
+  const navButtonClasses = (path) =>
+    `px-4 py-2 rounded-md transition-colors duration-200 ${
+      location.pathname === path
+        ? "bg-blue-600 text-white"
+        : "text-gray-700 hover:bg-gray-100"
+    }`;
 
   return (
-    <div className='navbar-container'>
-      <div className="left"><p>Shop Here</p></div>
-      <div className="center">
-        <Link to="/shop"><button className={location.pathname==="/shop"?"active":""}>Shop</button></Link>
-        <Link to="/shop/men"><button className={location.pathname==="/shop/men"?"active":""}>Men</button></Link>
-        <Link to="/shop/women"><button className={location.pathname==="/shop/women"?"active":""}>Women</button></Link>
-        <Link to="/shop/kids"><button className={location.pathname==="/shop/kids"?"active":""}>Kids</button></Link>
-      </div>
-      <div className="right">
-        <Link to="/cart">
-          <button className={location.pathname==="/cart"?"active":""}>
-            <TiShoppingCart /><sup>
-              {
-                userName== "" ? 0 :
-                cartt
+    <nav className="w-full bg-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto flex justify-between items-center px-4 md:px-8 h-16">
+        {/* LEFT */}
+        <div className="text-2xl font-bold text-blue-600">Shop Here</div>
 
-              }
-              
-              </sup>
-          </button>
-        </Link>
-        <Link to="/profile">
-          <button className={location.pathname==="/profile"?"active":""}>
-            <CgProfile /> {userName ? `Hi, ${userName}` : ""}
-          </button>
-        </Link>
+        {/* CENTER */}
+        <div className="hidden md:flex space-x-4">
+          <Link to="/shop">
+            <button className={navButtonClasses("/shop")}>Shop</button>
+          </Link>
+          <Link to="/shop/men">
+            <button className={navButtonClasses("/shop/men")}>Men</button>
+          </Link>
+          <Link to="/shop/women">
+            <button className={navButtonClasses("/shop/women")}>Women</button>
+          </Link>
+          <Link to="/shop/kids">
+            <button className={navButtonClasses("/shop/kids")}>Kids</button>
+          </Link>
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex items-center space-x-4">
+          <Link to="/cart" className="relative">
+            <button
+              className={`flex items-center space-x-1 px-3 py-2 rounded-md transition-colors duration-200 ${
+                location.pathname === "/cart"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <TiShoppingCart className="text-xl" />
+              <span className="ml-1 font-semibold">{cartCount}</span>
+            </button>
+          </Link>
+
+          <Link to="/profile">
+            <button
+              className={`flex items-center space-x-1 px-3 py-2 rounded-md transition-colors duration-200 ${
+                location.pathname === "/profile"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <CgProfile className="text-xl" />
+              {userName && <span className="font-medium">Hi, {userName}</span>}
+            </button>
+          </Link>
+        </div>
       </div>
-    </div>
+    </nav>
   );
 }

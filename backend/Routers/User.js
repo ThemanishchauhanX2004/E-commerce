@@ -7,7 +7,7 @@ import authMiddleware from "../middlewares/authmiddleware.js";
 const userRouter= Router()
 userRouter.post("/signup",upload.single("picture"), handleMulterError, signup )
 userRouter.post("/login", password, login)
-userRouter.get("/getProfile", authMiddleware,getProfile)
+userRouter.get("/Profile", authMiddleware,getProfile)
 userRouter.post("/logout",authMiddleware,  logout)
 userRouter.put("/updateProfile", upload.single("picture"), handleMulterError, updateProfile);
 

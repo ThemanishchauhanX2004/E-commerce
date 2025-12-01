@@ -1,3 +1,4 @@
+// Profile.jsx
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -22,47 +23,86 @@ export default function Profile() {
   const [passwordError, setPasswordError] = useState("");
   const [editMode, setEditMode] = useState(false);
 
+  // =========================
+  // FETCH PROFILE ON LOAD
+  // =========================
   useEffect(() => {
-    // Fetch profile info if logged in
     async function fetchProfile() {
       try {
-        const res = await fetch("https://e-commerce-1-km7j.onrender.com/profile", {
+        const res = await fetch("https://e-commerce-1-km7j.onrender.com/Profile", {
           method: "GET",
           credentials: "include",
         });
+
+        if (!res.ok) {
+          console.error("Failed to fetch profile:", res.status);
+          setIsLoggedIn(false);
+          return;
+        }
+
         const data = await res.json();
-        if (res.ok && data.user) {
+        if (data.user) {
           setIsLoggedIn(true);
           setLoggedInUser(data.user);
-        } else {
-          setIsLoggedIn(false);
         }
       } catch (err) {
         console.error("Failed to fetch profile:", err);
       }
     }
+
     fetchProfile();
   }, [dispatch]);
 
-  const handleSignup = async () => {
-    // TODO: Add signup logic
-  };
-
+  // =========================
+  // LOGIN FUNCTION
+  // =========================
   const handleLogin = async () => {
-    // TODO: Add login logic
+    try {
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          userName: form.userName,
+          password: form.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setIsLoggedIn(true);
+        setLoggedInUser(data.user);
+        setForm({ ...form, password: "" });
+        alert("Login successful!");
+      } else {
+        alert(data.message || "Login failed!");
+      }
+    } catch (err) {
+      console.error("Login failed:", err);
+      alert("Something went wrong. Try again.");
+    }
   };
 
+  // =========================
+  // LOGOUT FUNCTION
+  // =========================
   const handleLogout = async () => {
     try {
       const res = await fetch("https://e-commerce-1-km7j.onrender.com/logout", {
         method: "POST",
         credentials: "include",
       });
+
       if (res.ok) {
         setIsLoggedIn(false);
         setLoggedInUser(null);
         dispatch({ type: "set-cart", payload: { products: [], totalPrice: 0, totalShipping: 0 } });
         navigate("/");
+      } else {
+        console.error("Logout failed:", res.status);
       }
     } catch (err) {
       console.error("Logout failed:", err);
@@ -70,9 +110,39 @@ export default function Profile() {
   };
 
   // =========================
+  // SIGNUP FUNCTION (OPTIONAL)
+  // =========================
+  const handleSignup = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("firstName", form.firstName);
+      formData.append("lastName", form.lastName);
+      formData.append("userName", form.userName);
+      formData.append("password", form.password);
+      if (form.picture) formData.append("picture", form.picture);
+
+      const res = await fetch("https://e-commerce-1-km7j.onrender.com/signup", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Signup successful! Please login.");
+        setForm({ firstName: "", lastName: "", userName: "", password: "", picture: null });
+      } else {
+        alert(data.message || "Signup failed!");
+      }
+    } catch (err) {
+      console.error("Signup failed:", err);
+      alert("Something went wrong. Try again.");
+    }
+  };
+
+  // =========================
   // RENDERING
   // =========================
-
   if (!isLoggedIn) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
@@ -113,7 +183,6 @@ export default function Profile() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-lg relative">
               <h3 className="text-xl font-bold mb-4">Edit Profile</h3>
-              {/* Add your edit profile form fields here */}
               <button
                 onClick={() => setEditMode(false)}
                 className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 font-bold"

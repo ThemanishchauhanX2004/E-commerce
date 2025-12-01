@@ -74,30 +74,38 @@ export async function signup(req, res) {
 // }
 
 export async function login(req, res) {
-  let { user } = req.body;
+  const { userName, password } = req.body;
+
   try {
-    let token = await jwt.sign({ id: user._id }, process.env.secret_key, {
-      expiresIn: "1d",
-    });
-    res.cookie("token", token,{
-        secure: true,     
+    // Find user in DB
+    const user = await User.findOne({ userName });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Incorrect password" });
+
+    let token = jwt.sign({ id: user._id }, process.env.secret_key, { expiresIn: "1d" });
+
+    res.cookie("token", token, {
+      secure: true,
       sameSite: "none",
-    })
-      .json({
-        message: "loggedin successfully ",
-        isAdmin: false,
-        user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          userName: user.userName,
-          Cartvalue:user.Cartvalue
-        },
-      });
-  } catch (error) {
-    res.send(error);
+    }).json({
+      message: "Logged in successfully",
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userName: user.userName,
+        Cartvalue: user.Cartvalue
+      },
+      isAdmin: false,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 }
+
 
 
 export async function getProfile(req, res) {

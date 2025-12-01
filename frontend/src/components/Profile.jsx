@@ -2,9 +2,10 @@
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import Signup from "./auth/Signup";
-import Login from "./auth/Login";
-import ProfileView from "./ProfileView";
+
+import Signup from "./auth/Signup.jsx";
+import Login from "./auth/Login.jsx";
+import ProfileView from "./ProfileView.jsx";
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -12,6 +13,7 @@ export default function Profile() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState(null);
+  const [showLogin, setShowLogin] = useState(false); // true -> show login form
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -29,17 +31,14 @@ export default function Profile() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch("https://e-commerce-1-km7j.onrender.com/Profile", {
-          method: "GET",
-          credentials: "include",
-        });
-
+        const res = await fetch(
+          "https://e-commerce-1-km7j.onrender.com/Profile",
+          { method: "GET", credentials: "include" }
+        );
         if (!res.ok) {
-          console.error("Failed to fetch profile:", res.status);
           setIsLoggedIn(false);
           return;
         }
-
         const data = await res.json();
         if (data.user) {
           setIsLoggedIn(true);
@@ -49,7 +48,6 @@ export default function Profile() {
         console.error("Failed to fetch profile:", err);
       }
     }
-
     fetchProfile();
   }, [dispatch]);
 
@@ -58,20 +56,16 @@ export default function Profile() {
   // =========================
   const handleLogin = async () => {
     try {
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          userName: form.userName,
-          password: form.password,
-        }),
-      });
-
+      const res = await fetch(
+        "https://e-commerce-1-km7j.onrender.com/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ userName: form.userName, password: form.password }),
+        }
+      );
       const data = await res.json();
-
       if (res.ok) {
         setIsLoggedIn(true);
         setLoggedInUser(data.user);
@@ -91,18 +85,15 @@ export default function Profile() {
   // =========================
   const handleLogout = async () => {
     try {
-      const res = await fetch("https://e-commerce-1-km7j.onrender.com/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
+      const res = await fetch(
+        "https://e-commerce-1-km7j.onrender.com/logout",
+        { method: "POST", credentials: "include" }
+      );
       if (res.ok) {
         setIsLoggedIn(false);
         setLoggedInUser(null);
         dispatch({ type: "set-cart", payload: { products: [], totalPrice: 0, totalShipping: 0 } });
         navigate("/");
-      } else {
-        console.error("Logout failed:", res.status);
       }
     } catch (err) {
       console.error("Logout failed:", err);
@@ -110,7 +101,7 @@ export default function Profile() {
   };
 
   // =========================
-  // SIGNUP FUNCTION (OPTIONAL)
+  // SIGNUP FUNCTION
   // =========================
   const handleSignup = async () => {
     try {
@@ -131,6 +122,7 @@ export default function Profile() {
       if (res.ok) {
         alert("Signup successful! Please login.");
         setForm({ firstName: "", lastName: "", userName: "", password: "", picture: null });
+        setShowLogin(true); // redirect to login after signup
       } else {
         alert(data.message || "Signup failed!");
       }
@@ -141,28 +133,52 @@ export default function Profile() {
   };
 
   // =========================
-  // RENDERING
+  // RENDER
   // =========================
   if (!isLoggedIn) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
         <div className="bg-white shadow-lg rounded-lg p-6 max-w-md w-full">
-          <Signup
-            form={form}
-            setForm={setForm}
-            handleSignup={handleSignup}
-            passwordError={passwordError}
-            showPassword={showPassword}
-            setShowPassword={setShowPassword}
-          />
-          <div className="my-4 border-t border-gray-300"></div>
-          <Login
-            form={form}
-            setForm={setForm}
-            handleLogin={handleLogin}
-            showPassword={showPassword}
-            setShowPassword={setShowPassword}
-          />
+          {!showLogin ? (
+            <>
+              <Signup
+                form={form}
+                setForm={setForm}
+                handleSignup={handleSignup}
+                passwordError={passwordError}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+              />
+              <p className="text-center mt-4">
+                Already have an account?{" "}
+                <button
+                  className="text-blue-500 font-semibold hover:underline"
+                  onClick={() => setShowLogin(true)}
+                >
+                  Login
+                </button>
+              </p>
+            </>
+          ) : (
+            <>
+              <Login
+                form={form}
+                setForm={setForm}
+                handleLogin={handleLogin}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+              />
+              <p className="text-center mt-4">
+                Don't have an account?{" "}
+                <button
+                  className="text-blue-500 font-semibold hover:underline"
+                  onClick={() => setShowLogin(false)}
+                >
+                  Signup
+                </button>
+              </p>
+            </>
+          )}
         </div>
       </div>
     );
@@ -177,8 +193,6 @@ export default function Profile() {
           navigate={navigate}
           setEditMode={setEditMode}
         />
-
-        {/* Edit Modal */}
         {editMode && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-lg relative">
